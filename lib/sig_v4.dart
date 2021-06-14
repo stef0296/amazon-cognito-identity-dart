@@ -14,20 +14,25 @@ const _default_accept_type = 'application/json';
 
 class AwsSigV4Client {
   String endpoint;
-  String pathComponent;
+  late String pathComponent;
   String region;
   String accessKey;
   String secretKey;
-  String sessionToken;
+  String? sessionToken;
   String serviceName;
   String defaultContentType;
   String defaultAcceptType;
-  AwsSigV4Client(this.accessKey, this.secretKey, String endpoint,
-      {this.serviceName = 'execute-api',
-      this.region = 'us-east-1',
-      this.sessionToken,
-      this.defaultContentType = _default_content_type,
-      this.defaultAcceptType = _default_accept_type}) {
+
+  AwsSigV4Client(
+    this.accessKey,
+    this.secretKey,
+    this.endpoint, {
+    this.serviceName = 'execute-api',
+    this.region = 'us-east-1',
+    this.sessionToken,
+    this.defaultContentType = _default_content_type,
+    this.defaultAcceptType = _default_accept_type,
+  }) {
     final parsedUri = Uri.parse(endpoint);
     this.endpoint = '${parsedUri.scheme}://${parsedUri.host}';
     this.pathComponent = parsedUri.path;
@@ -35,27 +40,28 @@ class AwsSigV4Client {
 }
 
 class SigV4Request {
-  String method;
-  String path;
+  late String method;
+  late String path;
   Map<String, String> queryParams;
   Map<String, String> headers;
-  String url;
-  String body;
+  late String url;
+  late String body;
   AwsSigV4Client awsSigV4Client;
-  String canonicalRequest;
-  String hashedCanonicalRequest;
-  String credentialScope;
-  String stringToSign;
+  late String canonicalRequest;
+  late String hashedCanonicalRequest;
+  late String credentialScope;
+  late String stringToSign;
   String datetime;
-  List<int> signingKey;
-  String signature;
+  late List<int> signingKey;
+  late String signature;
+
   SigV4Request(
     this.awsSigV4Client, {
-    String method,
-    String path,
-    this.datetime,
-    this.queryParams,
-    this.headers,
+    required String method,
+    required String path,
+    required this.datetime,
+    required this.queryParams,
+    required this.headers,
     dynamic body,
   }) {
     this.method = method.toUpperCase();
@@ -86,7 +92,7 @@ class SigV4Request {
 
     headers[_authorization] = _generateAuthorization(datetime);
     if (awsSigV4Client.sessionToken != null) {
-      headers[_x_amz_security_token] = awsSigV4Client.sessionToken;
+      headers[_x_amz_security_token] = awsSigV4Client.sessionToken ?? '';
     }
     headers.remove(_host);
 
@@ -157,7 +163,7 @@ class SigV4 {
     return Uri.encodeFull(uri);
   }
 
-  static String buildCanonicalQueryString(Map<String, String> queryParams) {
+  static String buildCanonicalQueryString(Map<String, String>? queryParams) {
     if (queryParams == null) {
       return '';
     }
@@ -171,7 +177,7 @@ class SigV4 {
     final List<String> canonicalQueryStrings = [];
     sortedQueryParams.forEach((key) {
       canonicalQueryStrings
-          .add('$key=${Uri.encodeComponent(queryParams[key])}');
+          .add('$key=${Uri.encodeComponent(queryParams[key] ?? '')}');
     });
 
     return canonicalQueryStrings.join('&');
